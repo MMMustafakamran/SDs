@@ -1,0 +1,161 @@
+@startuml
+title UC-01: Manage Profile (Refined Implementation)
+
+actor Actor as "Actor (Student/Teacher/Counsellor)"
+participant Frontend as "React Frontend"
+participant DashboardView
+participant UpdateProfileView
+participant SubjectListCreateView
+participant UserSerializer
+participant SubjectSerializer
+participant CustomUser as "CustomUser Model"
+participant Subject as "Subject Model"
+
+note over Actor, Subject
+UC-01: Manage Profile - Refined Implementation
+Based on actual codebase analysis
+end note
+
+'======================
+' Phase 1: Initial Dashboard Load
+'======================
+Actor -> Frontend : Access System
+Frontend -> DashboardView : GET /api/dashboard/
+activate DashboardView
+DashboardView -> DashboardView : Verify JWT Token
+DashboardView -> DashboardView : Retrieve basic user data
+DashboardView --> Frontend : Return basic profile data
+deactivate DashboardView
+Frontend --> Actor : Display dashboard with basic info
+
+'======================
+' Phase 2: Detailed Profile Load
+'======================
+Actor -> Frontend : Navigate to Profile Page
+Frontend -> UpdateProfileView : GET /api/update-profile/
+activate UpdateProfileView
+UpdateProfileView -> UpdateProfileView : Verify JWT Token
+UpdateProfileView -> UpdateProfileView : Retrieve detailed user data
+UpdateProfileView -> SubjectSerializer : Serialize user subjects
+activate SubjectSerializer
+SubjectSerializer -> Subject : Query user subjects
+Subject --> SubjectSerializer : Return subject data
+SubjectSerializer --> UpdateProfileView : Serialized subjects
+deactivate SubjectSerializer
+UpdateProfileView --> Frontend : Return detailed profile with subjects
+deactivate UpdateProfileView
+Frontend --> Actor : Display complete profile form
+
+'======================
+' Subject Management (Teacher Role)
+'======================
+alt Actor is Teacher
+    Actor -> Frontend : Click "Add Subject"
+    Frontend -> SubjectListCreateView : POST /api/subjects/
+    activate SubjectListCreateView
+    SubjectListCreateView -> SubjectListCreateView : Validate subject name
+    SubjectListCreateView -> Subject : Create new subject
+    activate Subject
+    Subject -> Subject : Save to database
+    Subject --> SubjectListCreateView : Subject created
+    deactivate Subject
+    SubjectListCreateView --> Frontend : Return new subject
+    deactivate SubjectListCreateView
+    Frontend -> Frontend : Update subject list and auto-select
+    Frontend --> Actor : Show updated subjects
+end
+
+'======================
+' Profile Edit Initiation
+'======================
+Actor -> Frontend : Click "Edit Profile"
+Frontend -> Frontend : Set isEditing = true
+Frontend --> Actor : Enable form fields for editing
+
+'======================
+' Form Data Updates
+'======================
+Actor -> Frontend : Update profile fields
+note right of Actor
+Student: personal details
+Teacher: subjects, expertise
+Counsellor: specialization areas
+end note
+
+alt Actor is Teacher
+    Actor -> Frontend : Select/Deselect subjects
+    Frontend -> Frontend : Update subject_ids array
+end
+
+'======================
+' Profile Update Submission
+'======================
+Actor -> Frontend : Click "Save Changes"
+Frontend -> Frontend : Clean and validate form data
+Frontend -> UpdateProfileView : PUT /api/update-profile/
+activate UpdateProfileView
+
+'======================
+' Email Verification Check
+'======================
+UpdateProfileView -> UpdateProfileView : Check user.email_verified
+
+alt Email Not Verified
+    UpdateProfileView --> Frontend : Error: 403 Forbidden
+    Frontend --> Actor : Show "Email verification required"
+else Email Verified
+    '======================
+    ' Data Validation
+    '======================
+    UpdateProfileView -> UserSerializer : Validate data (partial=True)
+    activate UserSerializer
+
+    alt Invalid Input
+        UserSerializer --> UpdateProfileView : Validation errors
+        UpdateProfileView --> Frontend : Error: Invalid data
+        Frontend --> Actor : Display validation errors
+    else Duplicate Subject (Teacher)
+        UserSerializer -> UserSerializer : Check subject uniqueness
+        UserSerializer --> UpdateProfileView : Error: Subject exists
+        UpdateProfileView --> Frontend : Error: Subject already exists
+        Frontend --> Actor : Show subject conflict message
+    else Valid Data
+        '======================
+        ' Database Update
+        '======================
+        UserSerializer -> UserSerializer : Process subject_ids
+        UserSerializer -> CustomUser : Update user record
+        activate CustomUser
+        CustomUser -> CustomUser : Save updated profile
+        CustomUser -> CustomUser : Update subject relationships
+        CustomUser --> UserSerializer : Profile updated
+        deactivate CustomUser
+
+        UserSerializer --> UpdateProfileView : Success
+        deactivate UserSerializer
+
+        UpdateProfileView --> Frontend : Success: Profile updated
+        deactivate UpdateProfileView
+        Frontend -> Frontend : Set isEditing = false
+        Frontend --> Actor : Show success confirmation
+    end
+end
+
+'======================
+' Profile Refresh
+'======================
+Actor -> Frontend : View updated profile
+Frontend -> UpdateProfileView : GET /api/update-profile/
+activate UpdateProfileView
+UpdateProfileView -> UpdateProfileView : Retrieve updated user data
+UpdateProfileView -> SubjectSerializer : Serialize updated subjects
+activate SubjectSerializer
+SubjectSerializer -> Subject : Query updated subjects
+Subject --> SubjectSerializer : Return updated data
+SubjectSerializer --> UpdateProfileView : Updated subjects
+deactivate SubjectSerializer
+UpdateProfileView --> Frontend : Return updated profile
+deactivate UpdateProfileView
+Frontend --> Actor : Display updated profile information
+
+@enduml
