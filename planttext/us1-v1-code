@@ -1,0 +1,95 @@
+@startuml
+title UC-01: Manage Profile
+
+actor Actor as "Actor (Student/Teacher/Counsellor)"
+participant Frontend as "React Frontend"
+participant DashboardView
+participant UpdateProfileView
+participant UserSerializer
+participant CustomUser as "CustomUser Model"
+
+note over Actor, CustomUser
+UC-01: Manage Profile
+end note
+
+'======================
+' Login and Access Profile
+'======================
+Actor -> Frontend : Access System
+Frontend -> DashboardView : GET /api/dashboard/
+activate DashboardView
+DashboardView -> DashboardView : Verify JWT Token
+DashboardView -> DashboardView : Retrieve user data
+DashboardView --> Frontend : Return profile data
+deactivate DashboardView
+Frontend --> Actor : Display current profile
+
+'======================
+' Initiate Profile Edit
+'======================
+Actor -> Frontend : Click Edit Profile
+Frontend --> Actor : Show profile form with current data
+
+'======================
+' Update Profile Information
+'======================
+Actor -> Frontend : Update profile fields
+note right of Actor
+Student: education, subjects
+Teacher: expertise, qualifications
+Counsellor: specialization, rates
+end note
+
+Actor -> Frontend : Submit profile changes
+Frontend -> UpdateProfileView : PUT /api/update-profile/
+activate UpdateProfileView
+
+'======================
+' Validation Flow
+'======================
+UpdateProfileView -> UpdateProfileView : Check email verification
+
+alt Email Not Verified
+    UpdateProfileView --> Frontend : Error: Email not verified
+    Frontend --> Actor : Show verification required message
+else Email Verified
+    UpdateProfileView -> UserSerializer : Validate data (partial=True)
+    activate UserSerializer
+
+    alt Invalid Input
+        UserSerializer --> UpdateProfileView : Validation errors
+        UpdateProfileView --> Frontend : Error: Invalid data
+        Frontend --> Actor : Display validation errors
+    else Duplicate Email
+        UserSerializer -> UserSerializer : Check email uniqueness
+        UserSerializer --> UpdateProfileView : Error: Email exists
+        UpdateProfileView --> Frontend : Error: Email already in use
+        Frontend --> Actor : Request alternate email
+    else Valid Data
+        UserSerializer -> CustomUser : Update user record
+        activate CustomUser
+        CustomUser -> CustomUser : Save updated profile
+        CustomUser --> UserSerializer : Profile updated
+        deactivate CustomUser
+
+        UserSerializer --> UpdateProfileView : Success
+        deactivate UserSerializer
+
+        UpdateProfileView --> Frontend : Success: Profile updated
+        deactivate UpdateProfileView
+        Frontend --> Actor : Show success confirmation
+    end
+end
+
+'======================
+' Refresh Dashboard
+'======================
+Actor -> Frontend : View updated profile
+Frontend -> DashboardView : GET /api/dashboard/
+activate DashboardView
+DashboardView -> DashboardView : Retrieve updated user data
+DashboardView --> Frontend : Return updated profile
+deactivate DashboardView
+Frontend --> Actor : Display updated profile information
+
+@enduml
