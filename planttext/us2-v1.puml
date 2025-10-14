@@ -1,0 +1,178 @@
+@startuml
+title UC-02: Manage Payments
+
+actor Student as "Student"
+actor Teacher as "Teacher/Counsellor"
+participant Frontend as "React Frontend"
+participant PaymentView as "Payment Management View"
+participant PaymentSerializer as "Payment Serializer"
+participant Connection as "Connection Model"
+participant Payment as "Payment Model"
+participant PaymentSystem as "External Payment System"
+participant EmailService as "Email Service"
+
+note over Student, EmailService
+UC-02: Manage Payments
+Design-level SD based on use case specification
+end note
+
+'======================
+' Student Payment Flow
+'======================
+Student -> Frontend : Access Payment Information
+Frontend -> PaymentView : GET /api/payments/
+activate PaymentView
+PaymentView -> PaymentView : Verify JWT Token
+PaymentView -> Connection : Query student connections
+activate Connection
+Connection -> Connection : Get active connections with rates
+Connection --> PaymentView : Return connection data
+deactivate Connection
+PaymentView -> Payment : Query payment history
+activate Payment
+Payment -> Payment : Get payment status for connections
+Payment --> PaymentView : Return payment data
+deactivate Payment
+PaymentView --> Frontend : Return payment summary
+deactivate PaymentView
+Frontend --> Student : Display connections and payment status
+
+'======================
+' Payment Summary
+'======================
+Student -> Frontend : Select connection for payment
+Frontend -> PaymentView : GET /api/payments/summary/{connection_id}/
+activate PaymentView
+PaymentView -> Connection : Get connection details
+activate Connection
+Connection --> PaymentView : Return connection info
+deactivate Connection
+PaymentView -> PaymentView : Calculate payment amount
+PaymentView --> Frontend : Return payment summary
+deactivate PaymentView
+Frontend --> Student : Show payment details
+
+'======================
+' Payment Authorization
+'======================
+Student -> Frontend : Authorize payment
+Frontend -> PaymentView : POST /api/payments/process/
+activate PaymentView
+
+'======================
+' External Payment Processing
+'======================
+PaymentView -> PaymentSystem : Submit payment request
+activate PaymentSystem
+PaymentSystem -> PaymentSystem : Validate transaction
+PaymentSystem --> PaymentView : Payment result
+deactivate PaymentSystem
+
+alt Payment Successful
+    '======================
+    ' Database Updates
+    '======================
+    PaymentView -> PaymentSerializer : Validate payment data
+    activate PaymentSerializer
+    PaymentSerializer -> Payment : Create payment record
+    activate Payment
+    Payment -> Payment : Save payment details
+    Payment --> PaymentSerializer : Payment saved
+    deactivate Payment
+    PaymentSerializer --> PaymentView : Success
+    deactivate PaymentSerializer
+
+    PaymentView -> Connection : Update connection status
+    activate Connection
+    Connection -> Connection : Set status to Active
+    Connection --> PaymentView : Connection updated
+    deactivate Connection
+
+    '======================
+    ' Receipt Generation
+    '======================
+    PaymentView -> EmailService : Send receipt to student
+    activate EmailService
+    EmailService -> EmailService : Generate digital receipt
+    EmailService --> PaymentView : Receipt sent
+    deactivate EmailService
+
+    PaymentView -> EmailService : Send receipt to teacher/counsellor
+    activate EmailService
+    EmailService -> EmailService : Generate digital receipt
+    EmailService --> PaymentView : Receipt sent
+    deactivate EmailService
+
+    PaymentView --> Frontend : Payment successful
+    Frontend --> Student : Show success message
+
+else Payment Failed
+    PaymentView --> Frontend : Payment failed
+    Frontend --> Student : Show error message
+end
+
+'======================
+' Teacher/Counsellor Payment History
+'======================
+Teacher -> Frontend : Access payment records
+Frontend -> PaymentView : GET /api/payments/history/
+activate PaymentView
+PaymentView -> PaymentView : Verify JWT Token
+PaymentView -> Payment : Query payment history
+activate Payment
+Payment -> Payment : Get payments for teacher/counsellor
+Payment --> PaymentView : Return payment history
+deactivate Payment
+PaymentView --> Frontend : Return payment records
+deactivate PaymentView
+Frontend --> Teacher : Display payment history
+
+'======================
+' Receipt Request
+'======================
+Teacher -> Frontend : Request receipt copy
+Frontend -> PaymentView : GET /api/payments/receipt/{payment_id}/
+activate PaymentView
+PaymentView -> Payment : Get payment details
+activate Payment
+Payment --> PaymentView : Return payment info
+deactivate Payment
+PaymentView -> EmailService : Send receipt copy
+activate EmailService
+EmailService -> EmailService : Generate receipt
+EmailService --> PaymentView : Receipt sent
+deactivate EmailService
+PaymentView --> Frontend : Receipt sent
+deactivate PaymentView
+Frontend --> Teacher : Confirm receipt sent
+
+'======================
+' Alternative Flows
+'======================
+
+'======================
+' Payment System Unavailable
+'======================
+note over PaymentView, PaymentSystem
+Alternative Flow A1: Payment System Unavailable
+end note
+
+PaymentView -> PaymentSystem : Submit payment request
+PaymentSystem --> PaymentView : Service unavailable
+PaymentView --> Frontend : Error: Payment system unavailable
+Frontend --> Student : Show system unavailable message
+
+'======================
+' Duplicate Payment Attempt
+'======================
+note over PaymentView, Payment
+Alternative Flow A2: Duplicate Payment
+end note
+
+PaymentView -> Payment : Check for duplicate payment
+Payment -> Payment : Validate billing cycle
+Payment --> PaymentView : Duplicate detected
+PaymentView --> Frontend : Error: Duplicate payment
+Frontend --> Student : Show duplicate payment alert
+
+@enduml
