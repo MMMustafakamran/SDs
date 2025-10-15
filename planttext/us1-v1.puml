@@ -5,6 +5,7 @@ actor Actor as "Actor (Student/Teacher/Counsellor)"
 participant Frontend as "React Frontend"
 participant DashboardView
 participant UpdateProfileView
+participant SubjectListCreateView
 participant UserSerializer
 participant CustomUser as "CustomUser Model"
 
@@ -23,6 +24,12 @@ DashboardView -> DashboardView : Retrieve user data
 DashboardView --> Frontend : Return profile data
 deactivate DashboardView
 Frontend --> Actor : Display current profile
+
+'======================
+' Load Subjects (for teacher role)
+'======================
+Frontend -> SubjectListCreateView : GET subjects/
+SubjectListCreateView --> Frontend : Return list of subjects
 
 '======================
 ' Initiate Profile Edit
@@ -60,11 +67,6 @@ else Email Verified
         UserSerializer --> UpdateProfileView : Validation errors
         UpdateProfileView --> Frontend : Error: Invalid data
         Frontend --> Actor : Display validation errors
-    else Duplicate Email
-        UserSerializer -> UserSerializer : Check email uniqueness
-        UserSerializer --> UpdateProfileView : Error: Email exists
-        UpdateProfileView --> Frontend : Error: Email already in use
-        Frontend --> Actor : Request alternate email
     else Valid Data
         UserSerializer -> CustomUser : Update user record
         activate CustomUser
@@ -79,6 +81,17 @@ else Email Verified
         deactivate UpdateProfileView
         Frontend --> Actor : Show success confirmation
     end
+end
+
+'======================
+' Optional: Teacher adds new subject
+'======================
+alt Teacher adds a new subject
+    Actor -> Frontend : Add Subject
+    Frontend -> SubjectListCreateView : POST subjects/ { name }
+    SubjectListCreateView --> Frontend : Created subject { id, name }
+    Frontend -> UpdateProfileView : PUT /api/update-profile/ { subject_ids }
+    UpdateProfileView --> Frontend : Success
 end
 
 '======================

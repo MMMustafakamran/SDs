@@ -1,0 +1,47 @@
+@startuml
+title UC-03: Create Study Plans
+
+actor Student
+participant Frontend as "React Frontend"
+participant StudyPlanAPI as "generate_study_plan"
+participant UpcomingTestAPI as "get_user_upcoming_tests"
+participant StudyPlan as "StudyPlan Model"
+participant Topic as "Topic Model"
+participant LLM as "LLM+RAG System"
+
+note over Student, StudyPlan
+Flows are aligned with implemented endpoints in views.py.
+Uses generate_study_plan (LLM-assisted) and StudyPlan CRUD.
+end note
+
+'======================
+' Prepare inputs
+'======================
+Student -> Frontend : Open Study Plan creator
+Frontend -> UpcomingTestAPI : GET upcoming tests
+UpcomingTestAPI --> Frontend : Tests with test_type + dates
+Frontend --> Student : Show tests and topic inputs
+
+'======================
+' Generate plan via LLM grouping
+'======================
+Student -> Frontend : Submit topics + selected tests
+Frontend -> StudyPlanAPI : POST /api/generate-study-plan/ { topic_statuses, upcoming_tests }
+activate StudyPlanAPI
+StudyPlanAPI -> LLM : Prompt to group topics by subject/test type
+LLM --> StudyPlanAPI : JSON object { "Subject - TestType": { title, topics[] } }
+
+alt Valid JSON
+    StudyPlanAPI -> StudyPlan : Create plan per subject/test
+    StudyPlanAPI -> Topic : Create topics with initial status
+    StudyPlanAPI --> Frontend : { message, plans[] }
+    Frontend --> Student : Show created plans
+else Invalid/No JSON
+    StudyPlanAPI --> Frontend : Error: LLM did not return valid JSON
+    Frontend --> Student : Show error & retry option
+end
+deactivate StudyPlanAPI
+
+@enduml
+
+

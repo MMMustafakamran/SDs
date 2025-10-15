@@ -1,0 +1,43 @@
+@startuml
+title UC-09: Validate Admission Documents (Design-Level)
+
+actor Counsellor
+participant Frontend as "React Frontend"
+participant ValidationAPI as "Document Validation"
+participant ApplicationDocument as "ApplicationDocument Model"
+participant Application as "Application Model"
+participant Notification as "Notifier"
+
+note over Counsellor, ApplicationDocument
+Design-level SD. Model exists; validation endpoints TBD.
+Covers queue, review, decision, and linking to app.
+end note
+
+'======================
+' Open validation queue
+'======================
+Counsellor -> Frontend : Open Pending Documents
+Frontend -> ValidationAPI : GET /documents/pending
+ValidationAPI -> ApplicationDocument : Fetch unreviewed docs
+ApplicationDocument --> ValidationAPI : List with metadata
+ValidationAPI --> Frontend : Pending documents
+Frontend --> Counsellor : Display queue
+
+'======================
+' Review and decide
+'======================
+Counsellor -> Frontend : Open a document
+Frontend -> ValidationAPI : GET /documents/{id}
+ValidationAPI -> ApplicationDocument : Load document
+ApplicationDocument --> ValidationAPI : Content + metadata
+ValidationAPI --> Frontend : Present for review
+Counsellor -> Frontend : Provide feedback + select decision
+Frontend -> ValidationAPI : POST decision { approve | suggest | revision | reject }
+ValidationAPI -> ApplicationDocument : Save status + feedback
+ValidationAPI -> Application : Link approved to application
+ValidationAPI -> Notification : Notify student
+ValidationAPI --> Frontend : Acknowledged
+
+@enduml
+
+

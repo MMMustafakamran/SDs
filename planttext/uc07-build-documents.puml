@@ -1,0 +1,44 @@
+@startuml
+title UC-07: Build Admission Documents (Design-Level)
+
+actor Student
+participant Frontend as "React Frontend"
+participant DocumentAPI as "Document Builder"
+participant LLM as "LLM+RAG System"
+participant Application as "Application Model"
+participant ApplicationDocument as "ApplicationDocument Model"
+participant Drive as "Google Drive API"
+
+note over Student, ApplicationDocument
+Design-level SD. Models exist; builder/upload endpoints TBD.
+Covers draft via LLM, optional plagiarism, upload to Drive.
+end note
+
+'======================
+' Start document creation
+'======================
+Student -> Frontend : Create new document
+Frontend -> DocumentAPI : GET templates & guiding questions
+DocumentAPI --> Frontend : Template/questions
+Student -> Frontend : Provide responses
+Frontend -> DocumentAPI : POST generate draft { responses }
+DocumentAPI -> LLM : Prompt with template + responses
+LLM --> DocumentAPI : Draft content
+DocumentAPI --> Frontend : Draft for review
+Frontend --> Student : Show draft & allow edits
+
+'======================
+' Finalize and upload
+'======================
+Student -> Frontend : Finalize document
+Frontend -> DocumentAPI : POST upload final { file/meta }
+DocumentAPI -> Drive : Upload file
+Drive --> DocumentAPI : File ID / link
+DocumentAPI -> ApplicationDocument : Save metadata (drive_file_id)
+ApplicationDocument --> DocumentAPI : Saved
+DocumentAPI --> Frontend : Success + link
+Frontend --> Student : Show uploaded doc
+
+@enduml
+
+

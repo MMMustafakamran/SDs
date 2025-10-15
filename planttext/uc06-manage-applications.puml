@@ -1,0 +1,58 @@
+@startuml
+title UC-06: Manage University Applications (Design-Level)
+
+actor Student
+actor Counsellor
+participant Frontend as "React Frontend"
+participant ApplicationAPI as "Application Manager"
+participant University as "University Model"
+participant Application as "Application Model"
+participant Notification as "Notifier"
+
+note over Student, Application
+Design-level SD. Application models exist, endpoints TBD.
+Includes counsellor collaboration and comparison/search steps.
+end note
+
+'======================
+' Access application manager
+'======================
+Student -> Frontend : Open Applications
+Frontend -> ApplicationAPI : GET /applications
+ApplicationAPI -> Application : List student's applications
+Application --> ApplicationAPI : { applications }
+ApplicationAPI --> Frontend : Applications list
+Frontend --> Student : Show dashboard
+
+'======================
+' Create new application
+'======================
+Student -> Frontend : Start new application
+Frontend -> ApplicationAPI : GET /universities?filters
+ApplicationAPI -> University : Search/filter data
+University --> ApplicationAPI : Results
+ApplicationAPI --> Frontend : University options
+Student -> Frontend : Select university/program
+Frontend -> ApplicationAPI : POST /applications { university, program }
+ApplicationAPI -> Application : Create Application (In Progress)
+Application --> ApplicationAPI : Created record
+ApplicationAPI --> Frontend : Created application
+Frontend --> Student : Show draft application
+
+'======================
+' Counsellor collaboration (if assigned)
+'======================
+Counsellor -> Frontend : Open shared application
+Frontend -> ApplicationAPI : GET /applications/{id}
+ApplicationAPI -> Application : Load record
+Application --> ApplicationAPI : Details
+ApplicationAPI --> Frontend : Show to counsellor
+Counsellor -> Frontend : Add feedback/comments
+Frontend -> ApplicationAPI : PATCH application updates
+ApplicationAPI -> Application : Save updates & log revisions
+ApplicationAPI -> Notification : Notify student
+ApplicationAPI --> Frontend : Updated application
+
+@enduml
+
+

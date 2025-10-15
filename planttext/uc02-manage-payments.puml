@@ -1,0 +1,78 @@
+@startuml
+title UC-02: Manage Payments (Design-Level)
+
+actor Student
+actor Mentor as "Teacher/Counsellor"
+participant Frontend as "React Frontend"
+participant PaymentView as "PaymentManagementView"
+participant Connection as "Connection Model"
+participant Payment as "Payment Model"
+participant PaymentSystem as "External Payment System"
+participant Notification as "Email/SMS Notifier"
+
+note over Student, Mentor
+UC-02 covers monthly advance payments to keep a connection active.
+Design-level SD (payment endpoints not yet implemented in code).
+end note
+
+'======================
+' Student views payment overview
+'======================
+Student -> Frontend : Open Payments screen
+Frontend -> PaymentView : GET /payments/overview
+activate PaymentView
+PaymentView -> Connection : Query active/pending connections
+Connection --> PaymentView : Connections with rates & due dates
+PaymentView -> Payment : Query recent payment status
+Payment --> PaymentView : Latest payments per connection
+PaymentView --> Frontend : Summary: connections, rates, status
+deactivate PaymentView
+Frontend --> Student : Display overview
+
+'======================
+' Select connection and authorize payment
+'======================
+Student -> Frontend : Select connection & Authorize
+Frontend -> PaymentView : POST /payments/intent { connection_id, amount, method }
+activate PaymentView
+PaymentView -> PaymentSystem : Create/confirm payment intent
+PaymentSystem --> PaymentView : Result { success | failure | duplicate }
+
+alt Payment success
+    PaymentView -> Payment : Create Payment record (Paid)
+    PaymentView -> Connection : Mark connection Active for paid month
+    PaymentView -> Notification : Send receipts to student + mentor
+    PaymentView --> Frontend : Success + receipt data
+    Frontend --> Student : Show confirmation & receipt
+else Duplicate attempt
+    PaymentView --> Frontend : Error: Duplicate for cycle
+    Frontend --> Student : Inform duplicate prevented
+else Failure / Unavailable
+    PaymentView --> Frontend : Error: Payment failed/unavailable
+    Frontend --> Student : Show retry guidance
+end
+deactivate PaymentView
+
+'======================
+' Mentor views payment history
+'======================
+Mentor -> Frontend : Open Payment History
+Frontend -> PaymentView : GET /payments/history
+activate PaymentView
+PaymentView -> Payment : Fetch mentor-side transactions
+Payment --> PaymentView : Payment list with student, month, amount
+PaymentView --> Frontend : History data
+deactivate PaymentView
+Frontend --> Mentor : Display history & receipt links
+
+'======================
+' Automated overdue handling (system-initiated)
+'======================
+PaymentView -> Payment : Check overdue per connection
+Payment --> PaymentView : Overdue items
+PaymentView -> Connection : Suspend/terminate overdue connections
+PaymentView -> Notification : Notify both parties
+
+@enduml
+
+

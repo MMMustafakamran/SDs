@@ -1,0 +1,48 @@
+@startuml
+title UC-05: Attempt Quizzes (Design-Level)
+
+actor Student
+participant Frontend as "React Frontend"
+participant QuizAPI as "Quiz Controller"
+participant Teacher as "Teacher (Question Bank)"
+participant Quiz as "Quiz Model"
+participant QuizResult as "QuizResult Model"
+participant QuizAnswer as "QuizAnswer Model"
+participant LLM as "LLM+RAG (Hints/Explanations)"
+
+note over Student, Quiz
+Design-level SD. Quiz endpoints not present in code yet.
+Incorporates teacher-validated quizzes and AI explanations.
+end note
+
+'======================
+' Start quiz
+'======================
+Student -> Frontend : Select subject/topic quiz
+Frontend -> QuizAPI : GET quiz overview
+QuizAPI -> Teacher : Verify validated quiz available
+Teacher --> QuizAPI : OK + Quiz metadata
+QuizAPI -> Quiz : Retrieve quiz content
+Quiz --> QuizAPI : Questions JSON
+QuizAPI --> Frontend : Overview + start token
+Frontend --> Student : Show quiz intro
+
+'======================
+' Attempt and submit
+'======================
+Student -> Frontend : Begin quiz, answer questions
+Frontend -> QuizAPI : POST submit responses
+QuizAPI -> Quiz : Load quiz
+QuizAPI -> QuizResult : Create result {score pending}
+loop For each answer
+    QuizAPI -> QuizAnswer : Save answer {selected, is_correct}
+end
+QuizAPI -> QuizResult : Compute score/metrics
+QuizAPI -> LLM : Generate explanations for incorrect
+LLM --> QuizAPI : Explanations
+QuizAPI --> Frontend : Score + analytics + explanations
+Frontend --> Student : Show analytics & AI doubt solving
+
+@enduml
+
+

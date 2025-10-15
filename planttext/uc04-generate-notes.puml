@@ -1,0 +1,66 @@
+@startuml
+title UC-04: Generate Notes
+
+actor Student
+participant Frontend as "React Frontend"
+participant NotesAPI as "generate_notes"
+participant CustomNote as "CustomNote Model"
+participant Note as "Note Model"
+participant Topic as "Topic Model"
+participant LLM as "LLM+RAG System"
+
+note over Student, Note
+Implements logic from views.generate_notes:
+1) return CustomNote if exists
+2) return existing AI Note if exists
+3) else call LLM and save Note
+end note
+
+'======================
+' Request notes for a topic
+'======================
+Student -> Frontend : Request notes { topic_id, difficulty }
+Frontend -> NotesAPI : POST /api/generate-notes/
+activate NotesAPI
+NotesAPI -> Topic : Validate topic ownership
+Topic --> NotesAPI : Topic
+
+'======================
+' Check custom note
+'======================
+NotesAPI -> CustomNote : Find by (user, topic)
+alt Custom note exists
+    CustomNote --> NotesAPI : { id, content, custom: true }
+    NotesAPI --> Frontend : Return custom note
+    deactivate NotesAPI
+    Frontend --> Student : Display custom note
+else No custom note
+    CustomNote --> NotesAPI : None
+
+    '======================
+    ' Check existing AI note
+    '======================
+    NotesAPI -> Note : Find by (topic, difficulty)
+    alt Existing AI note exists
+        Note --> NotesAPI : Note content
+        NotesAPI --> Frontend : Return AI note
+        deactivate NotesAPI
+        Frontend --> Student : Display AI note
+    else No existing AI note
+        Note --> NotesAPI : None
+
+        '======================
+        ' Generate via LLM
+        '======================
+        NotesAPI -> LLM : Prompt with topic + difficulty + test context
+        LLM --> NotesAPI : Markdown content
+        NotesAPI -> Note : Save AI note
+        NotesAPI --> Frontend : Return created note
+        deactivate NotesAPI
+        Frontend --> Student : Display generated note
+    end
+end
+
+@enduml
+
+
