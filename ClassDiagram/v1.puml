@@ -1,0 +1,353 @@
+@startuml
+title ParhaiPartner - Hybrid Class Diagram (Core Data Model)
+
+skinparam classAttributeIconSize 0
+hide methods
+
+' =========================
+' Users and Roles (Hybrid)
+' =========================
+class CustomUser {
+  +id: int
+  +username: str
+  +email: str
+  +full_name: str
+  +role: enum {student|teacher|counsellor}
+  +email_verified: bool
+  +phone_number: str
+  +address: text
+  +date_of_birth: date
+  +gender: str
+  +bio: text
+  +occupation: str
+  +national_id_number: str
+  +created_at: datetime
+  +updated_at: datetime
+  +last_password_change: datetime
+}
+
+class Subject {
+  +id: int
+  +name: str (unique)
+}
+
+CustomUser "0..*" -- "0..*" Subject : subjects
+note right of CustomUser
+In code, a single model with role field.
+Below are conceptual specializations.
+end note
+
+class Student <<conceptual>> {
+  ' conceptual specialization of CustomUser
+}
+class Teacher <<conceptual>> {
+  ' conceptual specialization of CustomUser
+}
+class Counsellor <<conceptual>> {
+  ' conceptual specialization of CustomUser
+}
+
+Student -up-|> CustomUser
+Teacher -up-|> CustomUser
+Counsellor -up-|> CustomUser
+
+' =========================
+' Social/Connections
+' =========================
+class FriendRequest {
+  +id: int
+  +status: enum {pending|accepted|rejected}
+  +created_at: datetime
+  +responded_at: datetime
+}
+FriendRequest "1" --> "1" CustomUser : from_user
+FriendRequest "1" --> "1" CustomUser : to_user
+note right of FriendRequest
+unique (from_user, to_user)
+end note
+
+class Connection {
+  +id: int
+  +created_at: datetime
+}
+Connection "1" --> "1" CustomUser : student (role=student)
+Connection "1" --> "1" CustomUser : connected_user (role in {teacher,counsellor})
+note right of Connection
+unique (student, connected_user)
+end note
+
+' =========================
+' Education Background
+' =========================
+class EducationRecord {
+  +id: int
+  +level: enum
+  +institution_name: str
+  +board_or_university: str
+  +start_year: int
+  +end_year: int
+  +grading_system: enum
+  +gpa: decimal
+  +percentage: decimal
+  +grade: str
+  +subjects: text
+}
+CustomUser "1" -- "0..*" EducationRecord : user
+
+' =========================
+' Upcoming Tests / Study Plans / Topics
+' =========================
+class UpcomingTest {
+  +id: int
+  +test_name: str
+  +test_type: enum
+  +test_date: date
+  +test_time: time
+  +location: str
+  +registration_deadline: date
+  +notes: text
+  +created_at: datetime
+}
+CustomUser "1" -- "0..*" UpcomingTest : user
+
+class StudyPlan {
+  +id: int
+  +title: str
+  +subject: str
+  +goal: text
+  +start_date: date
+  +end_date: date
+}
+CustomUser "1" -- "0..*" StudyPlan : user
+
+class Topic {
+  +id: int
+  +name: str
+  +description: text
+  +status: enum {todo|in_progress|done}
+}
+CustomUser "1" -- "0..*" Topic : user
+StudyPlan "1" -- "0..*" Topic : topics
+
+' =========================
+' Notes
+' =========================
+class Note {
+  +id: int
+  +content: text (markdown)
+  +difficulty: enum {easy|medium|hard}
+  +created_at: datetime
+}
+Topic "1" -- "0..*" Note
+CustomUser "1" -- "0..*" Note : user
+note right of Note
+unique (topic, difficulty)
+end note
+
+class CustomNote {
+  +id: int
+  +content: text
+  +difficulty: enum
+  +created_at: datetime
+}
+CustomUser "1" -- "0..*" CustomNote : user
+Topic "1" -- "0..*" CustomNote
+note right of CustomNote
+unique (user, topic)
+end note
+
+' =========================
+' Quizzes
+' =========================
+class Quiz {
+  +id: int
+  +title: str
+  +questions: JSON
+  +created_at: datetime
+}
+StudyPlan "1" -- "0..*" Quiz
+CustomUser "1" -- "0..*" Quiz : user
+
+class QuizResult {
+  +id: int
+  +score: int
+  +submitted_at: datetime
+}
+Quiz "1" -- "0..*" QuizResult
+CustomUser "1" -- "0..*" QuizResult : user
+
+class QuizAnswer {
+  +id: int
+  +question_id: int
+  +question: text
+  +options: JSON
+  +correct_answer: str
+  +selected_option: str
+  +was_correct: bool
+  +explanation: text
+}
+QuizResult "1" -- "0..*" QuizAnswer
+
+' =========================
+' Universities / Applications
+' =========================
+class University {
+  +id: int
+  +name: str
+  +country: str
+  +description: text
+  +ranking: int
+  +website: text
+}
+class Program {
+  +id: int
+  +name: str
+  +degree_level: enum
+  +description: text
+}
+University "1" -- "0..*" Program
+
+class Application {
+  +id: int
+  +application_deadline: date
+  +start_date: date
+  +website_url: url
+  +status: enum {in_progress|submitted|accepted|rejected|waitlisted|withdrawn|na}
+  +personal_statement_done: enum {yes|no|na}
+  +reco_letters_sent: enum {yes|no|na}
+  +application_submitted: enum {yes|no|na}
+  +admission_result: enum
+  +enrolled: enum {yes|no|na}
+  +notes_personal_statement: text
+  +notes_program_choice: text
+  +notes_challenges_or_flags: text
+  +application_portal: str
+  +application_link: url
+  +application_id: str
+  +last_updated_by: str
+  +created_at: datetime
+  +updated_at: datetime
+}
+CustomUser "1" -- "0..*" Application : student
+University "1" -- "0..*" Application
+Program "0..1" -- "0..*" Application
+
+class ApplicationDocument {
+  +id: int
+  +category: enum {cv|sop|lor|transcript|financial|language|passport|other}
+  +notes: text
+  +original_filename: str
+  +stored_filename: str
+  +drive_file_id: str
+  +mime_type: str
+  +size_bytes: bigint
+  +uploaded_at: datetime
+}
+CustomUser "1" -- "0..*" ApplicationDocument : student
+Application "1" -- "0..*" ApplicationDocument : documents
+note right of ApplicationDocument
+unique (application, stored_filename)
+end note
+
+class UniversityComparisonInfo {
+  +id: int
+  +rank: int
+  +application_deadline: date
+  +acceptance_rate: str
+  +tuition_fee: str
+  +language_requirement: str
+  +application_fee: str
+  +raw_data: JSON
+  +last_updated: datetime
+}
+University "1" -- "0..1" UniversityComparisonInfo : comparison_info
+
+' =========================
+' Collaboration / Misc
+' =========================
+class PrivateComment {
+  +id: int
+  +content: text
+  +timestamp: datetime
+}
+Application "1" -- "0..*" PrivateComment
+CustomUser "1" -- "0..*" PrivateComment : author
+
+class UploadedFile {
+  +id: int
+  +file: file
+  +file_type: enum {pdf|docx|txt|image}
+  +used_for: str
+  +uploaded_at: datetime
+}
+CustomUser "1" -- "0..*" UploadedFile : user
+
+class Feedback {
+  +id: int
+  +message: text
+  +type: enum {bug|suggestion|other}
+  +created_at: datetime
+}
+CustomUser "0..1" -- "0..*" Feedback : user
+
+class Notification {
+  +id: int
+  +title: str
+  +message: text
+  +is_read: bool
+  +created_at: datetime
+}
+CustomUser "1" -- "0..*" Notification : user
+
+' =========================
+' Planned/Domain Entities (not yet in code)
+' =========================
+class Payment <<planned>> {
+  +id: int
+  +student: User
+  +recipient: User (teacher/counsellor)
+  +amount: decimal
+  +currency: str
+  +service_type: str
+  +payment_method: str
+  +transaction_id: str
+  +status: str
+  +payment_date: datetime
+}
+CustomUser "1" -- "0..*" Payment : student
+CustomUser "1" -- "0..*" Payment : recipient
+
+class PerformanceAnalytics <<planned>> {
+  +id: int
+  +total_attempts: int
+  +correct_answers: int
+  +accuracy_percentage: float
+  +average_time_seconds: int
+  +last_attempt_date: date
+  +improvement_trend: str
+}
+CustomUser "1" -- "0..*" PerformanceAnalytics : student
+' optional links
+' StudyPlan/Subject/Topic could be referenced
+
+class DoubtQuestion <<planned>> {
+  +id: int
+  +question_text: text
+  +question_image_url: str
+  +llm_response: text
+  +is_helpful: bool
+  +created_date: datetime
+}
+CustomUser "1" -- "0..*" DoubtQuestion : student
+Topic "0..1" -- "0..*" DoubtQuestion
+
+class CounsellorReview <<planned>> {
+  +id: int
+  +feedback_text: text
+  +approval_status: str
+  +review_date: date
+}
+Counsellor "1" -- "0..*" CounsellorReview
+ApplicationDocument "1" -- "0..*" CounsellorReview
+
+@enduml
