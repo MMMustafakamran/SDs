@@ -8,10 +8,6 @@ participant ApplicationDocument as "ApplicationDocument Model"
 participant Application as "Application Model"
 participant Notification as "Notifier"
 
-note over Counsellor, ApplicationDocument
-Design-level SD. Model exists; validation endpoints TBD.
-Covers queue, review, decision, and linking to app.
-end note
 
 '======================
 ' Open validation queue

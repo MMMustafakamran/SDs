@@ -9,10 +9,6 @@ participant Application as "Application Model"
 participant ApplicationDocument as "ApplicationDocument Model"
 participant Drive as "Google Drive API"
 
-note over Student, ApplicationDocument
-Design-level SD. Models exist; builder/upload endpoints TBD.
-Covers draft via LLM, optional plagiarism, upload to Drive.
-end note
 
 '======================
 ' Start document creation

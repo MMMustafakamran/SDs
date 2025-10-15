@@ -8,10 +8,6 @@ participant Note as "Note Model"
 participant LLM as "LLM+RAG System"
 participant QuestionBank as "Quiz/Question Store"
 
-note over Teacher, Note
-Design-level SD. Covers validation of student notes
-and teacher generation/validation of quiz questions.
-end note
 
 '======================
 ' Validate student-submitted notes

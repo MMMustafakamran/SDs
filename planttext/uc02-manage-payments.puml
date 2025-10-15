@@ -10,10 +10,6 @@ participant Payment as "Payment Model"
 participant PaymentSystem as "External Payment System"
 participant Notification as "Email/SMS Notifier"
 
-note over Student, Mentor
-UC-02 covers monthly advance payments to keep a connection active.
-Design-level SD (payment endpoints not yet implemented in code).
-end note
 
 '======================
 ' Student views payment overview

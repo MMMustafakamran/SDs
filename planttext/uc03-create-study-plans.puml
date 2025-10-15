@@ -9,10 +9,7 @@ participant StudyPlan as "StudyPlan Model"
 participant Topic as "Topic Model"
 participant LLM as "LLM+RAG System"
 
-note over Student, StudyPlan
-Flows are aligned with implemented endpoints in views.py.
-Uses generate_study_plan (LLM-assisted) and StudyPlan CRUD.
-end note
+
 
 '======================
 ' Prepare inputs
@@ -42,9 +39,6 @@ else Invalid JSON
 end
 deactivate StudyPlanAPI
 
-note over StudyPlanAPI
-Only future-dated tests produce plans; topics keep submitted status.
-end note
 
 @enduml
 

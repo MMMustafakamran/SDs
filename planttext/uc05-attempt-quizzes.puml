@@ -10,10 +10,6 @@ participant QuizResult as "QuizResult Model"
 participant QuizAnswer as "QuizAnswer Model"
 participant LLM as "LLM+RAG (Hints/Explanations)"
 
-note over Student, Quiz
-Design-level SD. Quiz endpoints not present in code yet.
-Incorporates teacher-validated quizzes and AI explanations.
-end note
 
 '======================
 ' Start quiz

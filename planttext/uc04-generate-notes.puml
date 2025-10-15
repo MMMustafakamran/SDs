@@ -9,12 +9,6 @@ participant Note as "Note Model"
 participant Topic as "Topic Model"
 participant LLM as "LLM+RAG System"
 
-note over Student, Note
-Implements logic from views.generate_notes:
-1) return CustomNote if exists
-2) return existing AI Note if exists
-3) else call LLM and save Note
-end note
 
 '======================
 ' Request notes for a topic

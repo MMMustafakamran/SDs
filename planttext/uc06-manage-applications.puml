@@ -9,10 +9,6 @@ participant University as "University Model"
 participant Application as "Application Model"
 participant Notification as "Notifier"
 
-note over Student, Application
-Design-level SD. Application models exist, endpoints TBD.
-Includes counsellor collaboration and comparison/search steps.
-end note
 
 '======================
 ' Access application manager
