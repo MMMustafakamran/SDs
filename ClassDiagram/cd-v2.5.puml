@@ -67,8 +67,8 @@ class Connection {
   +id: int
   +created_at: datetime
 }
-Connection "1" --> "1" CustomUser : student\n{role=student}
-Connection "1" --> "1" CustomUser : connected_user\n{role in {teacher,counsellor}}
+Connection "1" --> "1" CustomUser : student (role=student)
+Connection "1" --> "1" CustomUser : connected_user (role in {teacher,counsellor})
 note right of Connection
 unique (student, connected_user)
 end note
@@ -78,12 +78,12 @@ end note
 ' =========================
 class EducationRecord {
   +id: int
-  +level: enum {matric|o_levels|intermediate|a_levels|ib|igcse|bachelors|masters|other}
+  +level: enum
   +institution_name: str
   +board_or_university: str
   +start_year: int
   +end_year: int
-  +grading_system: enum {gpa|percentage|grades|other}
+  +grading_system: enum
   +gpa: decimal
   +total_gpa: decimal
   +percentage: decimal
@@ -91,7 +91,7 @@ class EducationRecord {
   +subjects: text
   +achievements: text
 }
-CustomUser "1" o-- "0..*" EducationRecord : user
+CustomUser "1" -- "0..*" EducationRecord : user
 
 ' =========================
 ' Upcoming Tests / Study Plans / Topics
@@ -107,7 +107,7 @@ class UpcomingTest {
   +notes: text
   +created_at: datetime
 }
-CustomUser "1" o-- "0..*" UpcomingTest : user
+CustomUser "1" -- "0..*" UpcomingTest : user
 
 class StudyPlan {
   +id: int
@@ -117,7 +117,7 @@ class StudyPlan {
   +start_date: date
   +end_date: date
 }
-CustomUser "1" o-- "0..*" StudyPlan : user
+CustomUser "1" -- "0..*" StudyPlan : user
 
 class Topic {
   +id: int
@@ -125,20 +125,20 @@ class Topic {
   +description: text
   +status: enum {todo|in_progress|done}
 }
-CustomUser "1" o-- "0..*" Topic : user
-StudyPlan "1" *-- "0..*" Topic : topics
+CustomUser "1" -- "0..*" Topic : user
+StudyPlan *-- "0..*" Topic : topics
 
 ' =========================
 ' Notes
 ' =========================
 class Note {
   +id: int
-  +content: text
+  +content: text (markdown)
   +difficulty: enum {easy|medium|hard}
   +created_at: datetime
 }
-Topic "1" o-- "0..*" Note
-CustomUser "1" o-- "0..*" Note : user
+Topic "1" -- "0..*" Note
+CustomUser "1" -- "0..*" Note : user
 note right of Note
 unique (topic, difficulty)
 end note
@@ -149,8 +149,8 @@ class CustomNote {
   +difficulty: enum {easy|medium|hard}
   +created_at: datetime
 }
-CustomUser "1" o-- "0..*" CustomNote : user
-Topic "1" o-- "0..*" CustomNote
+CustomUser "1" -- "0..*" CustomNote : user
+Topic "1" -- "0..*" CustomNote
 note right of CustomNote
 unique (user, topic)
 end note
@@ -164,16 +164,16 @@ class Quiz {
   +questions: JSON
   +created_at: datetime
 }
-StudyPlan "1" o-- "0..*" Quiz
-CustomUser "1" o-- "0..*" Quiz : user
+StudyPlan "1" -- "0..*" Quiz
+CustomUser "1" -- "0..*" Quiz : user
 
 class QuizResult {
   +id: int
   +score: int
   +submitted_at: datetime
 }
-Quiz "1" o-- "0..*" QuizResult
-CustomUser "1" o-- "0..*" QuizResult : user
+Quiz "1" -- "0..*" QuizResult
+CustomUser "1" -- "0..*" QuizResult : user
 
 class QuizAnswer {
   +id: int
@@ -185,7 +185,7 @@ class QuizAnswer {
   +was_correct: bool
   +explanation: text
 }
-QuizResult "1" *-- "0..*" QuizAnswer
+QuizResult *-- "0..*" QuizAnswer
 
 ' =========================
 ' Universities / Applications
@@ -201,16 +201,16 @@ class University {
 class Program {
   +id: int
   +name: str
-  +degree_level: enum {bachelors|masters|phd|other}
+  +degree_level: enum
   +description: text
 }
-University "1" o-- "0..*" Program
+University "1" -- "0..*" Program
 
 class Application {
   +id: int
   +application_deadline: date
   +start_date: date
-  +website_url: str
+  +website_url: url
   +status: enum {in_progress|submitted|accepted|rejected|waitlisted|withdrawn|na}
   +personal_statement_done: enum {yes|no|na}
   +reco_letters_sent: enum {yes|no|na}
@@ -226,15 +226,15 @@ class Application {
   +notes_program_choice: text
   +notes_challenges_or_flags: text
   +application_portal: str
-  +application_link: str
+  +application_link: url
   +application_id: str
   +last_updated_by: str
   +created_at: datetime
   +updated_at: datetime
 }
-CustomUser "0..1" o-- "0..*" Application : student
-University "1" o-- "0..*" Application
-Program "0..1" o-- "0..*" Application
+CustomUser "0..1" -- "0..*" Application : student
+University "1" -- "0..*" Application
+Program "0..1" -- "0..*" Application
 
 class ApplicationDocument {
   +id: int
@@ -247,12 +247,12 @@ class ApplicationDocument {
   +size_bytes: bigint
   +uploaded_at: datetime
 }
-CustomUser "1" o-- "0..*" ApplicationDocument : student
-Application "1" *-- "0..*" ApplicationDocument : documents
-CustomUser "0..1" -- "0..*" ApplicationDocument : uploaded_by
+CustomUser "1" -- "0..*" ApplicationDocument : student
+Application *-- "0..*" ApplicationDocument : documents
 note right of ApplicationDocument
 unique (application, stored_filename)
 end note
+CustomUser "0..1" -- "0..*" ApplicationDocument : uploaded_by
 
 class UniversityComparisonInfo {
   +id: int
@@ -275,8 +275,8 @@ class PrivateComment {
   +content: text
   +timestamp: datetime
 }
-Application "1" *-- "0..*" PrivateComment
-CustomUser "1" o-- "0..*" PrivateComment : author
+Application *-- "0..*" PrivateComment
+CustomUser "1" -- "0..*" PrivateComment : author
 
 class UploadedFile {
   +id: int
@@ -285,7 +285,7 @@ class UploadedFile {
   +used_for: str
   +uploaded_at: datetime
 }
-CustomUser "1" o-- "0..*" UploadedFile : user
+CustomUser "1" -- "0..*" UploadedFile : user
 
 class Feedback {
   +id: int
@@ -293,7 +293,7 @@ class Feedback {
   +type: enum {bug|suggestion|other}
   +created_at: datetime
 }
-CustomUser "0..1" o-- "0..*" Feedback : user
+CustomUser "0..1" -- "0..*" Feedback : user
 
 class Notification {
   +id: int
@@ -302,20 +302,20 @@ class Notification {
   +is_read: bool
   +created_at: datetime
 }
-CustomUser "1" o-- "0..*" Notification : user
+CustomUser "1" -- "0..*" Notification : user
 
 class ScholarshipApplication {
   +id: int
   +name: str
   +country: str
-  +website: str
+  +website: url
   +deadline: date
   +status: enum {saved|in_progress|submitted|accepted|rejected}
   +notes: text
   +created_at: datetime
   +updated_at: datetime
 }
-CustomUser "1" o-- "0..*" ScholarshipApplication : user
+CustomUser "1" -- "0..*" ScholarshipApplication : user
 
 class AdminLog {
   +id: int
@@ -323,13 +323,15 @@ class AdminLog {
   +details: text
   +created_at: datetime
 }
-CustomUser "0..1" o-- "0..*" AdminLog : user
+CustomUser "0..1" -- "0..*" AdminLog : user
 
 ' =========================
 ' Planned/Domain Entities (not yet in code)
 ' =========================
 class Payment <<planned>> {
   +id: int
+  +student: User
+  +recipient: User (teacher/counsellor)
   +amount: decimal
   +currency: str
   +service_type: str
@@ -338,8 +340,8 @@ class Payment <<planned>> {
   +status: str
   +payment_date: datetime
 }
-CustomUser "1" o-- "0..*" Payment : student
-CustomUser "1" o-- "0..*" Payment : recipient
+CustomUser "1" -- "0..*" Payment : student
+CustomUser "1" -- "0..*" Payment : recipient
 
 class PerformanceAnalytics <<planned>> {
   +id: int
@@ -350,7 +352,7 @@ class PerformanceAnalytics <<planned>> {
   +last_attempt_date: date
   +improvement_trend: str
 }
-CustomUser "1" o-- "0..*" PerformanceAnalytics : student
+CustomUser "1" -- "0..*" PerformanceAnalytics : student
 
 class DoubtQuestion <<planned>> {
   +id: int
@@ -360,8 +362,8 @@ class DoubtQuestion <<planned>> {
   +is_helpful: bool
   +created_date: datetime
 }
-CustomUser "1" o-- "0..*" DoubtQuestion : student
-Topic "0..1" o-- "0..*" DoubtQuestion
+CustomUser "1" -- "0..*" DoubtQuestion : student
+Topic "0..1" -- "0..*" DoubtQuestion
 
 class CounsellorReview <<planned>> {
   +id: int
@@ -369,7 +371,9 @@ class CounsellorReview <<planned>> {
   +approval_status: str
   +review_date: date
 }
-Counsellor "1" o-- "0..*" CounsellorReview
-ApplicationDocument "1" o-- "0..*" CounsellorReview
+Counsellor "1" -- "0..*" CounsellorReview
+ApplicationDocument "1" -- "0..*" CounsellorReview
 
 @enduml
+
+
