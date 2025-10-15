@@ -22,8 +22,13 @@ end note
 Student -> Frontend : Request notes { topic_id, difficulty }
 Frontend -> NotesAPI : POST /api/generate-notes/
 activate NotesAPI
-NotesAPI -> Topic : Validate topic ownership
-Topic --> NotesAPI : Topic
+
+alt Invalid difficulty
+    NotesAPI --> Frontend : Error 400 (difficulty)
+    Frontend --> Student : Show error
+else Valid difficulty
+    NotesAPI -> Topic : Validate topic ownership
+    Topic --> NotesAPI : Topic
 
 '======================
 ' Check custom note
@@ -53,13 +58,14 @@ else No custom note
         ' Generate via LLM
         '======================
         NotesAPI -> LLM : Prompt with topic + difficulty + test context
-        LLM --> NotesAPI : Markdown content
+        LLM --> NotesAPI : Markdown content (cleaned)
         NotesAPI -> Note : Save AI note
         NotesAPI --> Frontend : Return created note
         deactivate NotesAPI
         Frontend --> Student : Display generated note
     end
 end
+
 
 @enduml
 

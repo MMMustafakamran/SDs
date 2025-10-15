@@ -19,6 +19,7 @@ end note
 '======================
 Student -> Frontend : Open Applications
 Frontend -> ApplicationAPI : GET /applications
+activate ApplicationAPI
 ApplicationAPI -> Application : List student's applications
 Application --> ApplicationAPI : { applications }
 ApplicationAPI --> Frontend : Applications list
@@ -52,6 +53,13 @@ Frontend -> ApplicationAPI : PATCH application updates
 ApplicationAPI -> Application : Save updates & log revisions
 ApplicationAPI -> Notification : Notify student
 ApplicationAPI --> Frontend : Updated application
+
+alt Counsellor unauthorized
+    ApplicationAPI --> Frontend : Error 403
+    Frontend --> Counsellor : Access denied
+end
+
+deactivate ApplicationAPI
 
 @enduml
 

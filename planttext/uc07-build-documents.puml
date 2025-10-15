@@ -19,6 +19,7 @@ end note
 '======================
 Student -> Frontend : Create new document
 Frontend -> DocumentAPI : GET templates & guiding questions
+activate DocumentAPI
 DocumentAPI --> Frontend : Template/questions
 Student -> Frontend : Provide responses
 Frontend -> DocumentAPI : POST generate draft { responses }
@@ -38,6 +39,13 @@ DocumentAPI -> ApplicationDocument : Save metadata (drive_file_id)
 ApplicationDocument --> DocumentAPI : Saved
 DocumentAPI --> Frontend : Success + link
 Frontend --> Student : Show uploaded doc
+
+alt Upload failed
+    DocumentAPI --> Frontend : Error: Upload failed
+    Frontend --> Student : Retry later
+end
+
+deactivate DocumentAPI
 
 @enduml
 

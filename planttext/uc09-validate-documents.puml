@@ -18,6 +18,7 @@ end note
 '======================
 Counsellor -> Frontend : Open Pending Documents
 Frontend -> ValidationAPI : GET /documents/pending
+activate ValidationAPI
 ValidationAPI -> ApplicationDocument : Fetch unreviewed docs
 ApplicationDocument --> ValidationAPI : List with metadata
 ValidationAPI --> Frontend : Pending documents
@@ -37,6 +38,13 @@ ValidationAPI -> ApplicationDocument : Save status + feedback
 ValidationAPI -> Application : Link approved to application
 ValidationAPI -> Notification : Notify student
 ValidationAPI --> Frontend : Acknowledged
+
+alt Document not found
+    ValidationAPI --> Frontend : Error 404
+    Frontend --> Counsellor : Not found
+end
+
+deactivate ValidationAPI
 
 @enduml
 

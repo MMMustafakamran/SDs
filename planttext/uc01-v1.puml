@@ -65,7 +65,7 @@ else Email Verified
 
     alt Invalid Input
         UserSerializer --> UpdateProfileView : Validation errors
-        UpdateProfileView --> Frontend : Error: Invalid data
+        UpdateProfileView --> Frontend : Error 400: Invalid data
         Frontend --> Actor : Display validation errors
     else Valid Data
         UserSerializer -> CustomUser : Update user record

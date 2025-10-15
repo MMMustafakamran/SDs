@@ -18,9 +18,14 @@ end note
 '======================
 Teacher -> Frontend : Open validation queue
 Frontend -> ContentAPI : GET pending notes
+activate ContentAPI
 ContentAPI -> Note : Fetch pending (is_validated=false)
 Note --> ContentAPI : Notes with metadata
 ContentAPI --> Frontend : Pending notes
+alt No pending notes
+    ContentAPI --> Frontend : Empty list
+    Frontend --> Teacher : Nothing to review
+end
 Teacher -> Frontend : Review, approve/reject/request revision
 Frontend -> ContentAPI : POST decision + feedback
 ContentAPI -> Note : Update validation fields
@@ -37,6 +42,8 @@ Teacher -> Frontend : Review each question
 Frontend -> ContentAPI : Approve/Edit/Reject
 ContentAPI -> QuestionBank : Store approved items
 ContentAPI --> Frontend : Confirmation
+
+deactivate ContentAPI
 
 @enduml
 

@@ -44,9 +44,6 @@ alt Payment success
     PaymentView -> Notification : Send receipts to student + mentor
     PaymentView --> Frontend : Success + receipt data
     Frontend --> Student : Show confirmation & receipt
-else Duplicate attempt
-    PaymentView --> Frontend : Error: Duplicate for cycle
-    Frontend --> Student : Inform duplicate prevented
 else Failure / Unavailable
     PaymentView --> Frontend : Error: Payment failed/unavailable
     Frontend --> Student : Show retry guidance

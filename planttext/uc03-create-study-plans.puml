@@ -36,11 +36,15 @@ alt Valid JSON
     StudyPlanAPI -> Topic : Create topics with initial status
     StudyPlanAPI --> Frontend : { message, plans[] }
     Frontend --> Student : Show created plans
-else Invalid/No JSON
+else Invalid JSON
     StudyPlanAPI --> Frontend : Error: LLM did not return valid JSON
     Frontend --> Student : Show error & retry option
 end
 deactivate StudyPlanAPI
+
+note over StudyPlanAPI
+Only future-dated tests produce plans; topics keep submitted status.
+end note
 
 @enduml
 

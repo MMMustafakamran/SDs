@@ -20,12 +20,18 @@ end note
 '======================
 Student -> Frontend : Select subject/topic quiz
 Frontend -> QuizAPI : GET quiz overview
+activate QuizAPI
 QuizAPI -> Teacher : Verify validated quiz available
 Teacher --> QuizAPI : OK + Quiz metadata
 QuizAPI -> Quiz : Retrieve quiz content
 Quiz --> QuizAPI : Questions JSON
 QuizAPI --> Frontend : Overview + start token
 Frontend --> Student : Show quiz intro
+
+alt Quiz not available
+    QuizAPI --> Frontend : Error: No validated quiz
+    Frontend --> Student : Inform unavailability
+end
 
 '======================
 ' Attempt and submit
@@ -42,6 +48,8 @@ QuizAPI -> LLM : Generate explanations for incorrect
 LLM --> QuizAPI : Explanations
 QuizAPI --> Frontend : Score + analytics + explanations
 Frontend --> Student : Show analytics & AI doubt solving
+
+deactivate QuizAPI
 
 @enduml
 
